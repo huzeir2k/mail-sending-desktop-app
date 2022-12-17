@@ -49,7 +49,7 @@ namespace SendEmail
 
             smtpClient.Credentials = loginInfo;
 
-            content = new MailMessage { From = new MailAddress(userTextBox.Text, smtpTextBox.Text.Replace("smtp.", "@"), "", Encoding.UTF8)};
+            content = new MailMessage { From = new MailAddress(userTextBox.Text, smtpTextBox.Text.Replace("smtp.", "@"), Encoding.UTF8)};
 
             content.To.Add(new MailAddress(recipientTextBox.Text));
 
@@ -60,8 +60,24 @@ namespace SendEmail
             content.Subject = subjectTextBox.Text;
             content.Body = messageContent.Text;
             content.BodyEncoding = Encoding.UTF8;
-            content.Subject = subjectTextBox.Text;
+            content.IsBodyHtml = true;
+            content.Priority = MailPriority.Normal;
+            content.DeliveryNotificationOptions = DeliveryNotificationOptions.OnFailure;
+            smtpClient.SendCompleted += new SendCompletedEventHandler(SendCompletedCallback);
+            string userState = "Attempting to send message...";
+            smtpClient.SendAsync(content, userState);
 
+
+        }
+
+        private static void SendCompletedCallback(object sender, AsyncCompletedEventArgs e)
+        {
+            if (e.Cancelled)
+                MessageBox.Show(string.Format("{0} send has been cancelled.", e.UserState), "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (e.Error != null)
+                MessageBox.Show(string.Format("{0} {1} ", e.UserState, e.Error), "Message", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            else
+                MessageBox.Show("Message successfully sent.", "Message", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
         }
     }
